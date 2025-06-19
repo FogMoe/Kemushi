@@ -1,0 +1,150 @@
+{
+  "app": {
+    "name": "Kemushi",
+    "title": "檔案共享工具"
+  },
+  "nav": {
+    "home": "首頁",
+    "send": "傳送檔案",
+    "receive": "接收檔案",
+    "history": "傳輸記錄",
+    "settings": "設定",
+    "transferHistory": "傳輸歷史"
+  },
+  "home": {
+    "title": "檔案傳輸",
+    "subtitle": "安全、快速的檔案共享",
+    "sendCard": {
+      "title": "傳送檔案",
+      "description": "選擇檔案並產生共享金鑰",
+      "action": "開始傳送"
+    },
+    "receiveCard": {
+      "title": "接收檔案",
+      "description": "輸入金鑰接收檔案",
+      "action": "開始接收"
+    }
+  },
+  "send": {
+    "title": "傳送檔案",
+    "subtitle": "選擇要傳送的檔案",
+    "dropzone": {
+      "dragText": "拖曳檔案到這裡",
+      "or": "或",
+      "selectButton": "選擇檔案"
+    },
+    "fileInfo": {
+      "selected": "已選擇檔案",
+      "size": "檔案大小"
+    },
+    "shareKey": {
+      "title": "共享金鑰",
+      "copyButton": "複製",
+      "waiting": "等待接收方連線..."
+    },
+    "progress": {
+      "title": "傳輸進度"
+    }
+  },
+  "receive": {
+    "title": "接收檔案",
+    "subtitle": "輸入共享金鑰接收檔案",
+    "keyInput": {
+      "title": "輸入共享金鑰",
+      "placeholder": "輸入6位金鑰",
+      "connectButton": "連線"
+    },
+    "progress": {
+      "title": "接收檔案",
+      "manualSave": "手動儲存檔案"
+    }
+  },
+  "history": {
+    "title": "傳輸記錄",
+    "subtitle": "檢視歷史傳輸記錄",
+    "actions": {
+      "refresh": "重新整理",
+      "clear": "清空記錄"
+    },
+    "loading": "載入記錄中...",
+    "empty": "暫無傳輸記錄",
+    "item": {
+      "sent": "傳送檔案",
+      "received": "接收檔案",
+      "success": "成功",
+      "failed": "失敗",
+      "fileName": "檔案名稱",
+      "fileSize": "檔案大小",
+      "duration": "傳輸時長",
+      "saveLocation": "儲存位置",
+      "openLocation": "開啟位置",
+      "unknown": "未知",
+      "unknownFile": "未知檔案",
+      "seconds": "秒"
+    }
+  },
+  "settings": {
+    "title": "設定",
+    "subtitle": "應用程式設定",
+    "language": {
+      "title": "語言設定",
+      "label": "選擇語言",
+      "zhCN": "簡體中文",
+      "zhTW": "繁體中文"
+    }
+  },
+  "modal": {
+    "confirmClear": {
+      "title": "確認清空",
+      "message": "確定要清空所有傳輸記錄嗎？此操作無法復原。",
+      "confirm": "確定清空",
+      "cancel": "取消"
+    },
+    "clearSuccess": {
+      "title": "清空成功",
+      "message": "傳輸記錄已全部清空"
+    },
+    "clearFailed": {
+      "title": "清空失敗",
+      "message": "清空記錄時出現錯誤"
+    },
+    "error": {
+      "title": "錯誤",
+      "openLocation": "無法開啟檔案位置",
+      "systemNotSupported": "系統不支援此功能"
+    },
+    "saveFailed": {
+      "title": "儲存失敗",
+      "message": "沒有接收到任何檔案資料"
+    },
+    "transferComplete": {
+      "title": "傳輸完成",
+      "message": "檔案傳輸完成！已儲存到："
+    },
+    "connectionSuccess": {
+      "title": "連線成功",
+      "message": "已成功建立本地傳輸連線！"
+    },
+    "roomClosing": {
+      "title": "房間提示"
+    },
+    "resumeTransfer": {
+      "title": "偵測到未完成的傳輸",
+      "message": "檔案 \"{fileName}\" 的傳輸已完成 {progress}%，是否繼續？",
+      "continue": "繼續傳輸",
+      "restart": "重新開始"
+    },
+    "ok": "知道了",
+    "confirm": "確定",
+    "cancel": "取消"
+  },
+  "connection": {
+    "connected": "已連線",
+    "disconnected": "連線斷開",
+    "reconnecting": "正在重連... (第 {attempt} 次)",
+    "failed": "重連失敗"
+  },
+  "version": {
+    "checkUpdate": "檢查更新"
+  }
+} 

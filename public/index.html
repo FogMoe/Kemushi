@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kemushi - 文件共享工具</title>
+    <link rel="icon" type="image/png" href="icon.png">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/i18n.js"></script>
+</head>
+<body>
+        <div class="app-container">
+        <div class="app-layout">
+            <!-- 拖拽区域 -->
+            <div class="drag-region"></div>
+            
+            <!-- 窗口控制按钮 -->
+            <div class="window-controls">
+                <div class="window-control minimize" onclick="minimizeWindow()">
+                    <i class="bi bi-dash-lg"></i>
+                </div>
+                <div class="window-control maximize" onclick="maximizeWindow()">
+                    <i class="bi bi-app"></i>
+                </div>
+                <div class="window-control close" onclick="closeWindow()">
+                    <i class="bi bi-x-lg"></i>
+                </div>
+            </div>
+
+            <!-- 侧边栏导航 -->
+            <div class="sidebar">
+                <div class="sidebar-header">
+                    <div class="app-logo">
+                        <div class="logo-icon"><i class="bi bi-rocket-takeoff"></i></div>
+                        <div class="logo-text">Kemushi</div>
+                    </div>
+                </div>
+                
+                <nav class="sidebar-nav">
+                    <div class="nav-section">
+                        <div class="nav-item active" onclick="showSection('home')">
+                            <div class="nav-icon"><i class="bi bi-house-fill"></i></div>
+                            <span data-i18n="nav.home">首页</span>
+                        </div>
+                        <div class="nav-item" onclick="showSection('send')">
+                            <div class="nav-icon"><i class="bi bi-upload"></i></div>
+                            <span data-i18n="nav.send">发送文件</span>
+                        </div>
+                        <div class="nav-item" onclick="showSection('receive')">
+                            <div class="nav-icon"><i class="bi bi-download"></i></div>
+                            <span data-i18n="nav.receive">接收文件</span>
+                        </div>
+                    </div>
+                    
+                    <div class="nav-section">
+                        <div class="nav-title" data-i18n="nav.transferHistory">传输历史</div>
+                        <div class="nav-item" onclick="showSection('history')">
+                            <div class="nav-icon"><i class="bi bi-clock-history"></i></div>
+                            <span data-i18n="nav.history">传输记录</span>
+                        </div>
+                        <div class="nav-item" onclick="showSection('settings')">
+                            <div class="nav-icon"><i class="bi bi-gear-fill"></i></div>
+                            <span data-i18n="nav.settings">设置</span>
+                        </div>
+                    </div>
+                </nav>
+                
+                <div class="sidebar-footer">
+                    <span class="version">v1.0.0</span>
+                    <button class="update-btn" onclick="checkUpdate()" title="检查更新">
+                        <i class="bi bi-arrow-repeat"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 主内容区域 -->
+            <div class="main-container">
+                <!-- 首页 -->
+                <div class="content-section active" id="homeSection">
+                    <div class="section-header">
+                        <h1 data-i18n="home.title">文件传输</h1>
+                        <p data-i18n="home.subtitle">安全、快速的文件共享</p>
+                    </div>
+                    
+                    <div class="feature-cards">
+                        <div class="feature-card" onclick="showSection('send')">
+                            <div class="card-icon"><i class="bi bi-upload"></i></div>
+                            <h3 data-i18n="home.sendCard.title">发送文件</h3>
+                            <p data-i18n="home.sendCard.description">选择文件并生成共享密钥</p>
+                            <div class="card-action" data-i18n="home.sendCard.action">开始发送</div>
+                        </div>
+                        
+                        <div class="feature-card" onclick="showSection('receive')">
+                            <div class="card-icon"><i class="bi bi-download"></i></div>
+                            <h3 data-i18n="home.receiveCard.title">接收文件</h3>
+                            <p data-i18n="home.receiveCard.description">输入密钥接收文件</p>
+                            <div class="card-action" data-i18n="home.receiveCard.action">开始接收</div>
+                        </div>
+                    </div>
+                    
+
+                </div>
+
+                <!-- 发送文件页面 -->
+                <div class="content-section" id="sendSection">
+                    <div class="section-header">
+                        <h1 data-i18n="send.title">发送文件</h1>
+                        <p data-i18n="send.subtitle">选择要发送的文件</p>
+                    </div>
+                    
+                    <div class="send-content">
+                        <div class="file-select-card" id="fileSelectArea">
+                            <div class="drop-zone" id="dropZone">
+                                <div class="drop-icon"><i class="bi bi-folder2-open"></i></div>
+                                <p data-i18n="send.dropzone.dragText">拖拽文件到这里</p>
+                                <p data-i18n="send.dropzone.or">或</p>
+                                <button class="primary-btn" onclick="selectFile()" data-i18n="send.dropzone.selectButton">选择文件</button>
+                            </div>
+                            
+                            <div class="file-info hidden" id="fileInfo">
+                                <div class="file-preview">
+                                    <div class="file-icon"><i class="bi bi-file-earmark"></i></div>
+                                    <div class="file-details">
+                                        <p class="file-name">已选择文件: <span id="fileName"></span></p>
+                                        <p class="file-size">文件大小: <span id="fileSize"></span></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="share-card hidden" id="shareInfo">
+                            <h3>共享密钥</h3>
+                            <div class="key-display">
+                                <input type="text" id="shareKey" readonly>
+                                <button class="copy-btn" onclick="copyKey()">复制</button>
+                            </div>
+                            <p class="status">等待接收方连接...</p>
+                        </div>
+
+                        <div class="progress-card hidden" id="sendProgress">
+                            <h3>传输进度</h3>
+                            <div class="progress-container">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="sendProgressBar"></div>
+                                </div>
+                                <div class="progress-info">
+                                    <span class="progress-text" id="sendProgressText">0%</span>
+                                    <span class="speed-text" id="sendSpeedText"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 接收文件页面 -->
+                <div class="content-section" id="receiveSection">
+                    <div class="section-header">
+                        <h1>接收文件</h1>
+                        <p>输入共享密钥接收文件</p>
+                    </div>
+                    
+                    <div class="receive-content">
+                        <div class="key-input-card">
+                            <h3>输入共享密钥</h3>
+                            <div class="key-input-group">
+                                <input type="text" id="receiveKey" placeholder="输入6位密钥" maxlength="6">
+                                <button class="primary-btn" onclick="connectToPeer()">连接</button>
+                            </div>
+                        </div>
+
+                        <div class="progress-card hidden" id="receiveProgress">
+                            <h3>接收文件: <span id="receivingFileName"></span></h3>
+                            <div class="progress-container">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="receiveProgressBar"></div>
+                                </div>
+                                <div class="progress-info">
+                                    <span class="progress-text" id="receiveProgressText">0%</span>
+                                    <span class="speed-text" id="receiveSpeedText"></span>
+                                </div>
+                            </div>
+                            <button class="secondary-btn" id="manualSaveBtn" onclick="manualSave()" style="display:none; margin-top: 20px;">手动保存文件</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 传输记录页面 -->
+                <div class="content-section" id="historySection">
+                    <div class="section-header">
+                        <h1 data-i18n="history.title">传输记录</h1>
+                        <p data-i18n="history.subtitle">查看历史传输记录</p>
+                        <div class="header-actions">
+                            <button class="secondary-btn" onclick="refreshHistory()">
+                                <i class="bi bi-arrow-clockwise"></i> <span data-i18n="history.actions.refresh">刷新</span>
+                            </button>
+                            <button class="danger-btn" onclick="clearHistory()">
+                                <i class="bi bi-trash3"></i> <span data-i18n="history.actions.clear">清空记录</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="history-content" id="historyContent">
+                        <div class="loading-state" id="historyLoading">
+                            <div class="loading-icon"><i class="bi bi-arrow-repeat"></i></div>
+                            <p data-i18n="history.loading">加载记录中...</p>
+                        </div>
+                        
+                        <div class="empty-state hidden" id="historyEmpty">
+                            <div class="empty-icon"><i class="bi bi-clock-history"></i></div>
+                            <p data-i18n="history.empty">暂无传输记录</p>
+                        </div>
+                        
+                        <div class="history-list hidden" id="historyList">
+                            <!-- 传输记录项会动态插入这里 -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 设置页面 -->
+                <div class="content-section" id="settingsSection">
+                    <div class="section-header">
+                        <h1 data-i18n="settings.title">设置</h1>
+                        <p data-i18n="settings.subtitle">应用程序设置</p>
+                    </div>
+                    
+                    <div class="settings-content">
+                        <div class="settings-card">
+                            <h3 data-i18n="settings.language.title">语言设置</h3>
+                            <div class="settings-item">
+                                <label data-i18n="settings.language.label">选择语言</label>
+                                <select id="languageSelect" class="settings-select" onchange="changeLanguage(this.value)">
+                                    <option value="zh-CN" data-i18n="settings.language.zhCN">简体中文</option>
+                                    <option value="zh-TW" data-i18n="settings.language.zhTW">繁體中文</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+
+    </div>
+
+    <!-- 弹窗组件 -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modalTitle">标题</h3>
+                <button class="modal-close" onclick="closeModal()">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <div class="modal-content">
+                <p class="modal-message" id="modalMessage">消息内容</p>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn primary" id="modalPrimaryBtn" onclick="closeModal()">确定</button>
+                <button class="modal-btn secondary" id="modalSecondaryBtn" onclick="closeModal()" style="display: none;">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
+    <script src="https://unpkg.com/simple-peer@9.11.1/simplepeer.min.js"></script>
+    <script src="js/renderer.js"></script>
+</body>
+</html> 

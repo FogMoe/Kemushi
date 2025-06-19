@@ -1,0 +1,150 @@
+{
+  "app": {
+    "name": "Kemushi",
+    "title": "文件共享工具"
+  },
+  "nav": {
+    "home": "首页",
+    "send": "发送文件",
+    "receive": "接收文件",
+    "history": "传输记录",
+    "settings": "设置",
+    "transferHistory": "传输历史"
+  },
+  "home": {
+    "title": "文件传输",
+    "subtitle": "安全、快速的文件共享",
+    "sendCard": {
+      "title": "发送文件",
+      "description": "选择文件并生成共享密钥",
+      "action": "开始发送"
+    },
+    "receiveCard": {
+      "title": "接收文件",
+      "description": "输入密钥接收文件",
+      "action": "开始接收"
+    }
+  },
+  "send": {
+    "title": "发送文件",
+    "subtitle": "选择要发送的文件",
+    "dropzone": {
+      "dragText": "拖拽文件到这里",
+      "or": "或",
+      "selectButton": "选择文件"
+    },
+    "fileInfo": {
+      "selected": "已选择文件",
+      "size": "文件大小"
+    },
+    "shareKey": {
+      "title": "共享密钥",
+      "copyButton": "复制",
+      "waiting": "等待接收方连接..."
+    },
+    "progress": {
+      "title": "传输进度"
+    }
+  },
+  "receive": {
+    "title": "接收文件",
+    "subtitle": "输入共享密钥接收文件",
+    "keyInput": {
+      "title": "输入共享密钥",
+      "placeholder": "输入6位密钥",
+      "connectButton": "连接"
+    },
+    "progress": {
+      "title": "接收文件",
+      "manualSave": "手动保存文件"
+    }
+  },
+  "history": {
+    "title": "传输记录",
+    "subtitle": "查看历史传输记录",
+    "actions": {
+      "refresh": "刷新",
+      "clear": "清空记录"
+    },
+    "loading": "加载记录中...",
+    "empty": "暂无传输记录",
+    "item": {
+      "sent": "发送文件",
+      "received": "接收文件",
+      "success": "成功",
+      "failed": "失败",
+      "fileName": "文件名",
+      "fileSize": "文件大小",
+      "duration": "传输时长",
+      "saveLocation": "保存位置",
+      "openLocation": "打开位置",
+      "unknown": "未知",
+      "unknownFile": "未知文件",
+      "seconds": "秒"
+    }
+  },
+  "settings": {
+    "title": "设置",
+    "subtitle": "应用程序设置",
+    "language": {
+      "title": "语言设置",
+      "label": "选择语言",
+      "zhCN": "简体中文",
+      "zhTW": "繁體中文"
+    }
+  },
+  "modal": {
+    "confirmClear": {
+      "title": "确认清空",
+      "message": "确定要清空所有传输记录吗？此操作不可撤销。",
+      "confirm": "确定清空",
+      "cancel": "取消"
+    },
+    "clearSuccess": {
+      "title": "清空成功",
+      "message": "传输记录已全部清空"
+    },
+    "clearFailed": {
+      "title": "清空失败",
+      "message": "清空记录时出现错误"
+    },
+    "error": {
+      "title": "错误",
+      "openLocation": "无法打开文件位置",
+      "systemNotSupported": "系统不支持此功能"
+    },
+    "saveFailed": {
+      "title": "保存失败",
+      "message": "没有接收到任何文件数据"
+    },
+    "transferComplete": {
+      "title": "传输完成",
+      "message": "文件传输完成！已保存到："
+    },
+    "connectionSuccess": {
+      "title": "连接成功",
+      "message": "已成功建立本地传输连接！"
+    },
+    "roomClosing": {
+      "title": "房间提示"
+    },
+    "resumeTransfer": {
+      "title": "检测到未完成的传输",
+      "message": "文件 \"{fileName}\" 的传输已完成 {progress}%，是否继续？",
+      "continue": "继续传输",
+      "restart": "重新开始"
+    },
+    "ok": "知道了",
+    "confirm": "确定",
+    "cancel": "取消"
+  },
+  "connection": {
+    "connected": "已连接",
+    "disconnected": "连接断开",
+    "reconnecting": "正在重连... (第 {attempt} 次)",
+    "failed": "重连失败"
+  },
+  "version": {
+    "checkUpdate": "检查更新"
+  }
+} 

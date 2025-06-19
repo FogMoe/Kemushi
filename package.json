@@ -1,0 +1,104 @@
+{
+  "name": "kemushi",
+  "version": "1.0.0",
+  "description": "文件共享工具",
+  "main": "src/main/index.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "build": "electron-builder",
+    "build:win": "electron-builder --win",
+    "build:win32": "electron-builder --win --ia32",
+    "build:win64": "electron-builder --win --x64",
+    "build:portable": "electron-builder --win portable",
+    "build:portable64": "electron-builder --win portable --x64",
+    "build:dir": "electron-builder --dir",
+    "test": "electron . --dev"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FogMoe/Kemushi.git"
+  },
+  "keywords": [
+    "p2p",
+    "file-sharing",
+    "electron"
+  ],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/FogMoe/Kemushi"
+  },
+  "homepage": "https://github.com/FogMoe/Kemushi",
+  "devDependencies": {
+    "electron": "^36.5.0",
+    "electron-builder": "^26.0.12"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "simple-peer": "^9.11.1",
+    "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.1",
+    "uuid": "^11.1.0"
+  },
+  "build": {
+    "appId": "moe.fog.kemushi",
+    "productName": "Kemushi",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "public/**/*",
+      "package.json",
+      "!**/*.log",
+      "!**/*.md",
+      "!.gitignore",
+      "!.git/**/*",
+      "!node_modules/**/test/**/*"
+    ],
+    "extraFiles": [
+      {
+        "from": "src/i18n",
+        "to": "resources/i18n",
+        "filter": ["**/*.json"]
+      },
+      {
+        "from": "public/icon.png",
+        "to": "icon.png"
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64", "ia32"]
+        },
+        {
+          "target": "portable",
+          "arch": ["x64", "ia32"]
+        }
+      ],
+      "icon": "build/icon.ico",
+      "verifyUpdateCodeSignature": false,
+      "forceCodeSigning": false,
+      "signAndEditExecutable": false
+    },
+    "portable": {
+      "artifactName": "${productName}-${version}-portable-${arch}.${ext}",
+      "unpackDirName": "Kemushi"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "language": "2052",
+      "installerLanguages": ["zh-CN"],
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Kemushi"
+    }
+  }
+}
