@@ -24,8 +24,8 @@
     "file-sharing",
     "electron"
   ],
-  "author": "",
-  "license": "ISC",
+  "author": "ScarletKc",
+  "license": "AGPL-3.0",
   "type": "commonjs",
   "bugs": {
     "url": "https://github.com/FogMoe/Kemushi"
