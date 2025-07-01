@@ -13,7 +13,7 @@ let mainWindow;
 let server;
 let io;
 const rooms = new Map(); // 存储房间信息
-let isCloudMode = false; // 是否使用云服务器模式
+let isCloudMode = config.cloud.enabled; // 是否使用云服务器模式
 
 function createWindow() {
   // 设置应用图标路径
@@ -482,7 +482,7 @@ function createSignalingServer() {
 
   findAvailablePort(3000).then(port => {
     server.listen(port, () => {
-      console.log(`Signal server running on port ${port}`);
+      console.log(`服务器启动成功，端口: ${port}`);
       
       // 存储端口号供后续使用
       global.serverPort = port;
@@ -912,7 +912,14 @@ app.whenReady().then(() => {
   console.log('传输记录路径:', path.join(dataDir, 'transfer-records.json'));
   
   createWindow();
-  createSignalingServer();
+  
+  // 只在非云模式下启动本地信令服务器
+  if (!isCloudMode) {
+    createSignalingServer();
+  } else {
+    console.log('运行在云模式下，不启动本地信令服务器');
+    console.log('信令服务器地址:', config.cloud.signalServer);
+  }
 });
 
 app.on('window-all-closed', () => {

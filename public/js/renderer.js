@@ -13,6 +13,7 @@ var serverPort = 3000; // 默认端口
 var transferMode = null; // 当前传输模式
 var networkConfig = null; // 网络配置
 var currentRoomId = null; // 当前房间ID
+var remotePeerId = null; // 远程对等端ID
 
 // 断线重连相关变量
 var reconnectAttempts = 0;
@@ -217,8 +218,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // 创建socket连接
-        console.log(`创建新的Socket连接: http://localhost:${serverPort}`);
-        socket = io(`http://localhost:${serverPort}`, {
+        // 根据配置决定连接地址
+        const socketUrl = networkConfig?.config?.signalServer || `http://localhost:${serverPort}`;
+        console.log(`创建新的Socket连接: ${socketUrl}`);
+        socket = io(socketUrl, {
             reconnection: true,
             reconnectionAttempts: networkConfig?.reconnect?.maxAttempts || 5,
             reconnectionDelay: networkConfig?.reconnect?.interval || 3000,
@@ -252,6 +255,23 @@ document.addEventListener('DOMContentLoaded', function() {
             
             isReconnecting = false;
             reconnectAttempts = 0;
+        });
+        
+        // 监听传输模式变更（全局监听）
+        socket.on('transfer-mode-set', (data) => {
+            console.log('收到全局传输模式变更通知:', data.mode);
+            transferMode = data.mode;
+            
+            if (data.mode === 'server-relay') {
+                console.log('传输模式已变更为服务器中继');
+                if (currentMode === 'receive') {
+                    console.log('设置接收方中继接收器');
+                    setupRelayReceiver();
+                } else if (currentMode === 'send') {
+                    console.log('发送方准备开始中继传输');
+                    // 发送方会在P2P错误处理中自动开始发送
+                }
+            }
         });
         
         socket.on('connect_error', (err) => {
@@ -323,8 +343,10 @@ document.addEventListener('DOMContentLoaded', function() {
         
         updateConnectionStatus('connected');
         
-        // 重新加入房间
-        if (currentRoomId) {
+        // 重新加入房间（仅在有活跃传输时）
+        if (currentRoomId && (currentMode === 'send' || currentMode === 'receive')) {
+            console.log('尝试重新加入房间进行传输恢复:', currentRoomId);
+            
             socket.emit('rejoin-room', {
                 roomId: currentRoomId,
                 mode: currentMode,
@@ -348,9 +370,17 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 } else {
                     console.error('重新加入房间失败:', response.message);
+                    // 如果重新加入失败，可能房间已不存在，清理状态
+                    if (response.message.includes('不存在')) {
+                        console.log('房间已不存在，清理本地状态');
+                        currentRoomId = null;
+                        currentMode = null;
+                    }
                     showModal('恢复失败', '无法恢复传输：' + response.message, '知道了');
                 }
             });
+        } else {
+            console.log('没有需要恢复的传输');
         }
     }
     
@@ -532,6 +562,7 @@ function backToMenu() {
     }
     isReconnecting = false;
     reconnectAttempts = 0;
+    isConnecting = false;  // 重置连接状态标志
     
     // 清理传输进度（可选，根据需要决定是否保留）
     if (!isResumingTransfer) {
@@ -683,6 +714,7 @@ async function createRoom() {
         // 等待对方加入
         socket.on('peer-joined', (peerId) => {
             console.log('对等端已加入:', peerId);
+            remotePeerId = peerId;
             initiatePeerConnection(true);
         });
     });
@@ -702,10 +734,19 @@ function copyKey() {
     }, 2000);
 }
 
+// 连接状态标志
+var isConnecting = false;
+
 // 连接到对等端
 async function connectToPeer() {
     if (!socket) {
         console.error('Socket 未初始化');
+        return;
+    }
+    
+    // 防止重复连接
+    if (isConnecting) {
+        console.log('正在连接中，跳过重复请求');
         return;
     }
     
@@ -715,10 +756,30 @@ async function connectToPeer() {
         return;
     }
     
+    // 检查是否已经在同一个房间
+    if (currentRoomId === roomId) {
+        console.log('已经在房间', roomId, '中，跳过重复加入');
+        showModal('提示', '您已经在此房间中', '知道了');
+        return;
+    }
+    
+    isConnecting = true;
+    console.log('尝试加入房间:', roomId);
+    
     socket.emit('join-room', roomId, async (response) => {
         console.log('加入房间响应:', response);
+        
+        // 重置连接状态
+        isConnecting = false;
+        
         if (response.success) {
             currentRoomId = roomId;
+            
+            // 设置远程对等端ID（接收方设置发送方的ID）
+            if (response.hostId) {
+                remotePeerId = response.hostId;
+                console.log('设置远程对等端ID:', remotePeerId);
+            }
             
             if (response.selfTransfer) {
                 console.log('检测到自发自收，开始本地传输');
@@ -728,8 +789,9 @@ async function connectToPeer() {
                 
                 // 保存传输模式
                 if (response.transferMode) {
-                    transferMode = response.transferMode.mode;
+                    transferMode = response.transferMode.mode || response.transferMode;
                 }
+                console.log('设置传输模式为:', transferMode);
                 
                 // 检查是否有未完成的传输（需要文件信息）
                 if (response.fileInfo) {
@@ -783,32 +845,11 @@ function initiatePeerConnection(initiator) {
     console.log('创建新的P2P连接，initiator:', initiator);
     
     // 使用配置文件中的 ICE 服务器
-    let iceServers = networkConfig?.config?.iceServers || [
-        { urls: 'stun:stun.l.google.com:19302' },
-        { urls: 'stun:stun1.l.google.com:19302' },
-        { urls: 'stun:stunserver2025.stunprotocol.org' },
-        // Cloudflare TURN 服务器 (默认配置)
-        {
-            urls: 'turn:turn.cloudflare.com:3478',
-            username: 'optional',
-            credential: 'optional'
-        },
-        {
-            urls: 'turn:turn.cloudflare.com:3478?transport=tcp',
-            username: 'optional',
-            credential: 'optional'
-        },
-        {
-            urls: 'turn:turn.cloudflare.com:53?transport=udp',
-            username: 'optional',
-            credential: 'optional'
-        },
-        {
-            urls: 'turn:turn.cloudflare.com:80?transport=tcp',
-            username: 'optional',
-            credential: 'optional'
-        }
+    let iceServers = networkConfig?.config?.webrtc?.iceServers || [
+        { urls: 'stun:stun.l.google.com:19302' }
     ];
+    
+    console.log('使用ICE服务器配置:', iceServers);
     
     // 根据配置决定是否使用 TURN 服务器
     const enableTURN = networkConfig?.config?.webrtc?.enableTURN !== false; // 默认启用
@@ -828,10 +869,28 @@ function initiatePeerConnection(initiator) {
     });
     
     peer.on('signal', (signal) => {
-        console.log('发送信令数据:', signal);
-        socket.emit('signal', {
-            signal: signal
-        });
+        console.log('发送信令数据:', signal.type, '- 远程对等端ID:', remotePeerId);
+        if (remotePeerId) {
+            socket.emit('signal', {
+                signal: signal,
+                to: remotePeerId
+            });
+        } else {
+            console.error('无法发送信令：未找到远程对等端ID，当前模式:', currentMode);
+            console.error('当前房间ID:', currentRoomId);
+            // 尝试延迟发送，可能对等端ID还未设置
+            setTimeout(() => {
+                if (remotePeerId) {
+                    console.log('延迟发送信令，远程对等端ID:', remotePeerId);
+                    socket.emit('signal', {
+                        signal: signal,
+                        to: remotePeerId
+                    });
+                } else {
+                    console.error('延迟发送也失败，仍未找到远程对等端ID');
+                }
+            }, 1000);
+        }
     });
     
     socket.on('signal', (data) => {
@@ -841,9 +900,14 @@ function initiatePeerConnection(initiator) {
     
     peer.on('connect', () => {
         console.log('P2P连接已建立');
+        console.log('当前模式:', currentMode);
+        console.log('选中的文件:', selectedFile);
         showModal('连接成功', '已成功建立P2P连接！', '知道了');
         if (currentMode === 'send') {
+            console.log('开始发送文件...');
             sendFile();
+        } else {
+            console.log('等待接收文件...');
         }
     });
     
@@ -856,42 +920,96 @@ function initiatePeerConnection(initiator) {
     
     peer.on('error', (err) => {
         console.error('P2P连接错误:', err);
-        showModal('连接错误', '连接失败: ' + err.message, '知道了');
+        console.error('错误详情:', err.message, err.code);
+        console.log('当前传输模式:', transferMode);
+        console.log('远程对等端ID:', remotePeerId);
+        
+        // 尝试切换到服务器中继模式
+        if (transferMode !== 'server-relay') {
+            console.log('P2P连接失败，尝试切换到服务器中继模式');
+            transferMode = 'server-relay';
+            
+            // 通知服务器切换传输模式
+            if (socket && currentRoomId) {
+                socket.emit('set-transfer-mode', {
+                    roomId: currentRoomId,
+                    mode: 'server-relay'
+                });
+            }
+            
+            // 根据当前模式设置中继
+            if (currentMode === 'send') {
+                // 发送方：开始中继发送
+                sendFile();
+            } else {
+                // 接收方：设置中继接收器
+                setupRelayReceiver();
+            }
+            
+            showModal('传输提示', 'P2P连接失败，已切换到服务器中继模式', '知道了');
+        } else {
+            showModal('连接错误', '连接失败: ' + err.message, '知道了');
+        }
     });
 }
 
 // 发送文件
 async function sendFile() {
+    console.log('=== 开始发送文件 ===');
+    console.log('选中文件:', selectedFile);
+    console.log('当前传输模式:', transferMode);
+    console.log('房间ID:', currentRoomId);
+    console.log('网络配置:', networkConfig);
+    
+    if (!selectedFile) {
+        console.error('没有选中文件，无法发送');
+        showModal('发送错误', '请先选择要发送的文件', '知道了');
+        return;
+    }
+    
     document.getElementById('sendProgress').classList.remove('hidden');
     startTime = Date.now();
     
     // 生成传输ID
     if (!currentTransferId) {
         currentTransferId = generateTransferId(currentRoomId, selectedFile.name, selectedFile.size);
+        console.log('生成传输ID:', currentTransferId);
     }
     
     // 根据传输模式选择发送方式
     if (transferMode === 'server-relay') {
+        console.log('使用服务器中继模式发送');
         await sendFileViaRelay();
     } else {
+        console.log('使用P2P模式发送');
         await sendFileViaP2P();
     }
 }
 
 // 通过P2P发送文件
 async function sendFileViaP2P() {
-    // 读取文件
-    if (selectedFile.path) {
-        // Electron文件选择
-        const arrayBuffer = await window.electronAPI.readFile(selectedFile.path);
-        fileBuffer = new Uint8Array(arrayBuffer);
-    } else {
-        // 拖拽文件
-        const arrayBuffer = await selectedFile.file.arrayBuffer();
-        fileBuffer = new Uint8Array(arrayBuffer);
+    console.log('=== 开始P2P文件发送 ===');
+    try {
+        // 读取文件
+        if (selectedFile.path) {
+            console.log('读取Electron文件:', selectedFile.path);
+            const arrayBuffer = await window.electronAPI.readFile(selectedFile.path);
+            fileBuffer = new Uint8Array(arrayBuffer);
+        } else {
+            console.log('读取拖拽文件:', selectedFile.name);
+            const arrayBuffer = await selectedFile.file.arrayBuffer();
+            fileBuffer = new Uint8Array(arrayBuffer);
+        }
+        
+        console.log('文件读取完成，大小:', fileBuffer.length, '字节');
+    } catch (error) {
+        console.error('文件读取失败:', error);
+        showModal('发送错误', '文件读取失败: ' + error.message, '知道了');
+        return;
     }
     
-    const chunkSize = networkConfig?.transfer?.chunkSize || 64 * 1024;
+    const chunkSize = networkConfig?.config?.transfer?.chunkSize || 64 * 1024;
+    console.log('使用块大小:', chunkSize);
     totalChunks = Math.ceil(selectedFile.size / chunkSize);
     
     // 检查是否需要恢复传输
@@ -917,11 +1035,14 @@ async function sendFileViaP2P() {
     let chunkIndex = startChunk;
     
     console.log('开始P2P发送文件，总大小:', fileBuffer.length, '字节，总块数:', totalChunks, '，从块', startChunk, '开始');
+    console.log('peer连接状态:', peer.connected);
+    console.log('块大小配置:', chunkSize);
     
     while (offset < fileBuffer.length) {
         const chunk = fileBuffer.slice(offset, offset + chunkSize);
         
         try {
+            console.log(`发送块 ${chunkIndex}/${totalChunks}，大小: ${chunk.length} 字节`);
             peer.send(chunk);
             
             offset += chunkSize;
@@ -1049,10 +1170,8 @@ async function sendFileViaRelay() {
             totalChunks: totalChunks,
             chunkSize: chunkSize
         }),
-        metadata: {
-            totalChunks: totalChunks,
-            isMetadata: true
-        }
+        totalChunks: totalChunks,
+        transferId: currentTransferId
     });
     
     // 分块发送
@@ -1068,10 +1187,8 @@ async function sendFileViaRelay() {
             roomId: currentRoomId,
             chunkIndex: i,
             chunk: base64Chunk,
-            metadata: {
-                totalChunks: totalChunks,
-                currentChunk: i
-            }
+            totalChunks: totalChunks,
+            transferId: currentTransferId
         });
         
         // 更新进度
@@ -1729,19 +1846,10 @@ function setupRelayReceiver() {
     let receivedRelayChunks = 0;
     
     // 监听中继块接收事件
-    socket.on('relay-chunk-received', (data) => {
-        console.log(`收到中继块通知 ${data.chunkIndex}/${data.totalChunks}`);
+    socket.on('relay-chunk', (data) => {
+        console.log(`收到中继块 ${data.chunkIndex}/${data.totalChunks || '?'}`);
         
-        // 请求具体的块数据
-        socket.emit('request-relay-chunk', {
-            roomId: currentRoomId,
-            chunkIndex: data.chunkIndex
-        });
-    });
-    
-    // 接收中继块数据
-    socket.on('relay-chunk-data', (data) => {
-        const { chunkIndex, chunk } = data;
+        const { chunkIndex, chunk, totalChunks } = data;
         
         if (chunkIndex === -1) {
             // 元数据
@@ -1774,6 +1882,20 @@ function setupRelayReceiver() {
     socket.on('relay-chunk-error', (data) => {
         console.error('中继块错误:', data);
         showModal('传输错误', '文件块传输失败: ' + data.error, '知道了');
+    });
+    
+    // 监听传输模式变更
+    socket.on('transfer-mode-set', (data) => {
+        console.log('服务器通知传输模式变更为:', data.mode);
+        transferMode = data.mode;
+        
+        if (data.mode === 'server-relay') {
+            console.log('收到服务器中继模式通知');
+            // 如果是接收方且还没设置中继接收器，现在设置
+            if (currentMode === 'receive') {
+                setupRelayReceiver();
+            }
+        }
     });
 }
 
@@ -1874,6 +1996,7 @@ function resetUIAfterTransfer() {
     receivedSize = 0;
     startTime = null;
     window.receivedFileName = null;
+    isConnecting = false;  // 重置连接状态标志
     
     // 清理peer连接
     if (peer) {

@@ -8,11 +8,11 @@ module.exports = {
   
   // 云服务器配置（请替换为您的实际服务器信息）
   cloud: {
-    signalServer: 'wss://your-server.com',
-    apiEndpoint: 'https://your-server.com/api', // API端点
+    signalServer: 'http://kemushi.fog.moe:3000',  // 你的信令服务器地址
+    apiEndpoint: 'http://kemushi.fog.moe:3000/api', 
     // 如果需要认证
     apiKey: process.env.API_KEY || '',
-    enabled: false
+    enabled: true  // 启用云服务器模式
   },
   
   // WebRTC配置
@@ -20,41 +20,11 @@ module.exports = {
     // 是否启用 TURN 服务器（用于复杂网络环境）
     enableTURN: true,
     
-    // ICE服务器配置
+    // ICE服务器配置 
     iceServers: [
-      // STUN 服务器 - 用于 NAT 穿透
-      { urls: 'stun:stunserver2025.stunprotocol.org' },
-      { urls: 'stun:stun.miwifi.com:3478' },
-      { urls: 'stun:stun.yy.com:3478' },
-      { urls: 'stun:stun.chat.bilibili.com:3478' },
-      { urls: 'stun:stun.cloudflare.com:3478' },
-      { urls: 'stun:stun.l.google.com:19302' },
-      { urls: 'stun:stun1.l.google.com:19302' },
-      
-      // Cloudflare TURN 服务器配置
-      // TURN 服务器不仅可以进行 NAT 穿透，还可以在 P2P 连接失败时作为中继
-      // 注意：使用 TURN 服务器可能需要认证，请根据实际情况配置
-      {
-        urls: 'turn:turn.cloudflare.com:3478',
-        username: 'optional',  // 如果需要认证，请替换为实际用户名
-        credential: 'optional' // 如果需要认证，请替换为实际密码
-      },
-      {
-        urls: 'turn:turn.cloudflare.com:3478?transport=tcp',
-        username: 'optional',
-        credential: 'optional'
-      },
-      // 备用端口配置 - 用于绕过防火墙限制
-      {
-        urls: 'turn:turn.cloudflare.com:53?transport=udp', // DNS 端口，通常不会被阻止
-        username: 'optional',
-        credential: 'optional'
-      },
-      {
-        urls: 'turn:turn.cloudflare.com:80?transport=tcp', // HTTP 端口，通常不会被阻止
-        username: 'optional',
-        credential: 'optional'
-      }
+      // STUN 服务器 
+      { urls: 'stun:195.208.107.138:3478' },
+      { urls: 'stun:kemushi.fog.moe:3478' }
     ]
   },
   
